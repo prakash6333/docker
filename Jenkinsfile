@@ -8,7 +8,6 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Checkout your GitHub repo explicitly
                 git branch: 'main',
                     url: 'https://github.com/prakash6333/docker.git'
             }
@@ -16,27 +15,23 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh '''
-                  echo "🔨 Building Docker image..."
-                  docker build -t $DOCKER_IMAGE .
-                '''
+                echo "🔨 Building Docker image..."
+                sh 'docker build -t $DOCKER_IMAGE .'
             }
         }
 
         stage('Login & Push to Docker Hub') {
             steps {
                 withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-credentials', 
-                    usernameVariable: 'DOCKERHUB_USER', 
-                    passwordVariable: 'DOCKERHUB_PASS'
+                    credentialsId: 'docker',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
                 )]) {
-                    sh '''
-                      echo "🔐 Logging in to Docker Hub..."
-                      echo $DOCKERHUB_PASS | docker login -u $DOCKERHUB_USER --password-stdin
-                      
-                      echo "📤 Pushing Docker image..."
-                      docker push $DOCKER_IMAGE
-                    '''
+                    echo "🔐 Logging in to Docker Hub..."
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+
+                    echo "📤 Pushing Docker image..."
+                    sh 'docker push $DOCKER_IMAGE'
                 }
             }
         }
@@ -44,7 +39,7 @@ pipeline {
 
     post {
         success {
-            echo "✅ Build and Push successful!"
+            echo "✅ Docker image built and pushed successfully!"
         }
         failure {
             echo "❌ Build failed!"

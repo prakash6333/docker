@@ -2,43 +2,49 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('docker')  // Jenkins credentials ID
-        IMAGE_NAME = "prakash6333/mynginx"
-        IMAGE_TAG = "latest"
+        DOCKER_IMAGE = "prakash6333/mynginx:latest"
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/prakash6333/docker.git'
+                // Checkout your GitHub repo explicitly
+                git branch: 'main',
+                    url: 'https://github.com/prakash6333/docker.git'
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 sh '''
-                echo "Building Docker image..."
-                docker build -t $IMAGE_NAME:$IMAGE_TAG .
+                  echo "🔨 Building Docker image..."
+                  docker build -t $DOCKER_IMAGE .
                 '''
             }
         }
 
         stage('Login & Push to Docker Hub') {
             steps {
-                sh '''
-                echo "Logging into Docker Hub..."
-                echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
-                
-                echo "Pushing Docker image..."
-                docker push $IMAGE_NAME:$IMAGE_TAG
-                '''
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-credentials', 
+                    usernameVariable: 'DOCKERHUB_USER', 
+                    passwordVariable: 'DOCKERHUB_PASS'
+                )]) {
+                    sh '''
+                      echo "🔐 Logging in to Docker Hub..."
+                      echo $DOCKERHUB_PASS | docker login -u $DOCKERHUB_USER --password-stdin
+                      
+                      echo "📤 Pushing Docker image..."
+                      docker push $DOCKER_IMAGE
+                    '''
+                }
             }
         }
     }
 
     post {
         success {
-            echo "✅ Docker image pushed successfully to Docker Hub: $IMAGE_NAME:$IMAGE_TAG"
+            echo "✅ Build and Push successful!"
         }
         failure {
             echo "❌ Build failed!"

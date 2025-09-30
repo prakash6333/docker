@@ -1,11 +1,14 @@
-# Use a lightweight base image
-FROM nginx:alpine
+# Base image
+FROM nginx:latest
 
-# Copy your static website files into the container
-COPY index.html /usr/share/nginx/html/index.html
+# Maintainer info
+LABEL maintainer="prakash6333"
+
+# Copy custom index.html into nginx default folder
+COPY index.html /usr/share/nginx/html/
 
 # Expose port 80
 EXPOSE 80
 
-# Start Nginx
+# Start nginx
 CMD ["nginx", "-g", "daemon off;"]

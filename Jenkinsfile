@@ -6,12 +6,6 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                git branch: 'main', url: 'https://github.com/prakash6333/docker.git'
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
                 echo "🔨 Building Docker image..."
@@ -32,15 +26,6 @@ pipeline {
                     """
                 }
             }
-        }
-    }
-
-    post {
-        success {
-            echo "✅ Docker image pushed successfully to Docker Hub!"
-        }
-        failure {
-            echo "❌ Build failed!"
         }
     }
 }

@@ -1,30 +1,26 @@
 pipeline {
     agent any
 
-    environment {
-        IMAGE_NAME = "prakash6333/mynginx:latest"
-    }
-
     stages {
-        stage('Build Docker Image') {
+        stage('Clone Repo') {
             steps {
-                echo "🔨 Building Docker image..."
-                sh "docker build -t ${IMAGE_NAME} ."
+                git branch: 'main',
+                    url: 'https://github.com/prakash6333/docker.git'
             }
         }
 
-        stage('Login & Push to Docker Hub') {
+        stage('Build Docker Image') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'docker',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
-                    sh """
-                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                        docker push ${IMAGE_NAME}
-                    """
-                }
+                sh 'docker build -t prakash-test .'
+            }
+        }
+
+        stage('Run Docker Container') {
+            steps {
+                sh '''
+                docker rm -f prakash-container || true
+                docker run -d -p 8081:80 --name prakash-container prakash-test
+                '''
             }
         }
     }

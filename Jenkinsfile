@@ -2,49 +2,42 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "prakash6333/mynginx"
-        DOCKER_TAG = "latest"
+        IMAGE_NAME = "prakash6333/mynginx:latest"
     }
 
     stages {
-
         stage('Checkout') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/prakash6333/docker.git'
+                git branch: 'main', url: 'https://github.com/prakash6333/docker.git'
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 echo "🔨 Building Docker image..."
-                sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+                sh "docker build -t ${IMAGE_NAME} ."
             }
         }
 
-        stage('Login to Docker Hub') {
+        stage('Login & Push to Docker Hub') {
             steps {
                 withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-creds',
+                    credentialsId: 'docker',
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
-                    sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"
+                    sh """
+                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                        docker push ${IMAGE_NAME}
+                    """
                 }
-            }
-        }
-
-        stage('Push Docker Image') {
-            steps {
-                echo "📤 Pushing Docker image to Docker Hub..."
-                sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
             }
         }
     }
 
     post {
         success {
-            echo "✅ Docker image built and pushed successfully!"
+            echo "✅ Docker image pushed successfully to Docker Hub!"
         }
         failure {
             echo "❌ Build failed!"
